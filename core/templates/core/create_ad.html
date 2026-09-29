@@ -1,0 +1,46 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Создать объявление — Прокат вещей{% endblock %}
+
+{% block content %}
+  <h1>Создать объявление</h1>
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div style="color: #b00020; background: #ffebee; padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+
+    {% if form.errors %}
+      <div style="color: #b00020; background: #ffebee; padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
+        <strong>Пожалуйста, исправьте следующие ошибки:</strong>
+        <ul>
+          {% for field_name, errors in form.errors.items %}
+            <li><strong>{{ field_name }}</strong>: {{ errors|join:", " }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    {{ form.as_p }}
+
+    <button type="submit"
+        style="padding: 1rem 2rem; font-size: 1.1rem; font-weight: bold; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3); transition: background 0.2s;"
+        onmouseover="this.style.background='#218838'"
+        onmouseout="this.style.background='#28a745'">
+  Опубликовать объявление
+</button>
+  </form>
+
+  <p>
+    <small>
+      Поля, отмеченные звёздочкой (*), обязательны для заполнения.
+      Фото можно не загружать — объявление сохранится и без него.
+    </small>
+  </p>
+{% endblock %}
+
+

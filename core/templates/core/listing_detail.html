@@ -1,0 +1,99 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{{ listing.title }} — Прокат вещей{% endblock %}
+
+{% block content %}
+  <a href="{% url 'core:home' %}" style="color: #555; text-decoration: none; font-size: 0.9rem;">← Назад к списку</a>
+  <h1>{{ listing.title }}</h1>
+
+  <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+    <div style="flex: 1; min-width: 300px;">
+      {% if listing.image %}
+        <img src="{{ listing.image.url }}" alt="{{ listing.title }}"
+             style="width: 100%; max-width: 400px; height: auto; object-fit: cover; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+      {% else %}
+        <div style="width: 100%; min-height: 300px; background: #f0f0f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #888;">Нет фото</div>
+      {% endif %}
+    </div>
+
+    <div style="flex: 1; min-width: 250px;">
+      <p style="font-size: 1.2rem; font-weight: bold; color: #333;">
+        {{ listing.price_per_day }} ₽ / день
+
+        <span style="margin-left: 1rem; padding: 0.25rem 0.6rem; border-radius: 6px; font-size: 0.85rem; font-weight: normal;">
+          {% if status_class == 'available' %}
+            <span style="background: #d4edda; color: #155724;">✅ {{ display_status }}</span>
+          {% elif status_class == 'booked' %}
+            <span style="background: #fff3cd; color: #856404;">🔒 {{ display_status }}</span>
+          {% else %}
+            <span style="background: #f8d7da; color: #721c24;">❌ {{ display_status }}</span>
+          {% endif %}
+        </span>
+      </p>
+
+      <p><strong>Локация:</strong> {{ listing.location }}</p>
+      <p><strong>Владелец:</strong> {{ listing.owner.username }}</p>
+      <p><strong>Описание:</strong></p>
+      <p>{{ listing.description|linebreaks }}</p>
+    </div>
+  </div>
+
+  <!-- Блок кнопки аренды с умной логикой по статусу -->
+  {% if user.is_authenticated %}
+    {% if status_class == 'available' %}
+      <div style="margin-top: 1.5rem;">
+        <a href="{% url 'core:rental_request' listing.pk %}"
+           style="padding: 0.8rem 1.4rem; background: #28a745; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+          Запросить аренду
+        </a>
+      </div>
+    {% elif status_class == 'booked' %}
+      <p style="color: #666; margin-top: 1.5rem;">Это объявление сейчас забронировано — свободных дат нет.</p>
+    {% else %}
+      <p style="color: #999; margin-top: 1.5rem;">Объявление временно недоступно (приостановлено владельцем).</p>
+    {% endif %}
+  {% else %}
+    <p style="color: #666; margin-top: 1.5rem;">Чтобы запросить аренду, <a href="{% url 'core:user_login' %}" style="color: #007bff;">войдите в аккаунт</a>.</p>
+  {% endif %}
+
+
+
+  <!-- Блок отзывов -->
+  <h2>Отзывы об этом объявлении и продавце</h2>
+
+  {% if listing.reviews.exists %}
+    {% for review in listing.reviews.all %}
+      <div style="border: 1px solid #eee; padding: 1rem; margin-bottom: 1rem; border-radius: 8px;">
+        <strong>{{ review.author.username }}</strong>
+        <span style="color: #f39c12;">{{ review.get_rating_display }}</span>
+        <small style="color: #999; margin-left: 0.5rem;">{{ review.created_at|date:"d.m.Y H:i" }}</small>
+        {% if review.comment %}
+          <p style="margin-top: 0.5rem; color: #444;">{{ review.comment }}</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>Пока нет отзывов об этом объявлении.</p>
+  {% endif %}
+
+  <hr style="margin: 1.5rem 0;">
+
+  <!-- Форма отзыва (только для авторизованных пользователей) -->
+  {% if user.is_authenticated %}
+    <h3>Оставить отзыв</h3>
+    <form action="{% url 'core:create_review' listing.pk %}" method="post">
+      {% csrf_token %}
+      <div style="margin-bottom: 1rem;">
+        {{ form.rating.label_tag }}
+        {{ form.rating }}
+      </div>
+      <div>
+        {{ form.comment.label_tag }}
+        {{ form.comment }}
+      </div>
+      <button type="submit" style="margin-top: 1rem; padding: 0.6rem 1.2rem; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer;">Отправить отзыв</button>
+    </form>
+  {% else %}
+    <p style="color: #666;">Чтобы оставить отзыв, <a href="{% url 'login' %}" style="color: #007bff;">войдите в аккаунт</a>.</p>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Главная — Прокат вещей{% endblock %}
+
+{% block content %}
+  <h1>Прокат одежды: лучшие предложения</h1>
+
+  <!-- Форма поиска с фильтрами -->
+  <form method="get" action="{% url 'core:home' %}" style="margin-bottom: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+    <div style="display: flex; flex-direction: column; gap: 0.3rem;">
+      <label for="q" style="font-size: 0.85rem; color: #555;">Ключевые слова</label>
+      <input
+        type="text"
+        id="q"
+        name="q"
+        placeholder="Поиск по названию или описанию"
+        value="{{ query|default_if_none:'' }}"
+        style="padding: 0.5rem; min-width: 220px;"
+      >
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 0.3rem;">
+      <label for="location" style="font-size: 0.85rem; color: #555;">Местоположение</label>
+      <input
+        type="text"
+        id="location"
+        name="location"
+        placeholder="Город или район"
+        value="{{ location|default_if_none:'' }}"
+        style="padding: 0.5rem; min-width: 180px;"
+      >
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 0.3rem;">
+      <label for="max_price" style="font-size: 0.85rem; color: #555;">Цена до, ₽/день</label>
+      <input
+        type="number"
+        id="max_price"
+        name="max_price"
+        placeholder="Любая"
+        value="{{ max_price|default_if_none:'' }}"
+        style="padding: 0.5rem; min-width: 120px;"
+      >
+    </div>
+
+    <button type="submit" style="padding: 0.5rem 1.5rem;">Найти</button>
+    <a href="{% url 'core:home' %}" style="padding: 0.5rem 1rem; text-decoration: none; color: #555; font-size: 0.9rem;">Сбросить</a>
+  </form>
+
+  <hr style="margin: 1.5rem 0;">
+
+  {% if page_obj %}
+    {% for listing in page_obj %}
+      <div style="border: 1px solid #eee; padding: 1rem; margin-bottom: 1rem; border-radius: 8px; display: flex; gap: 1rem; align-items: flex-start;">
+
+        {% if listing.image %}
+          <img
+            src="{{ listing.image.url }}"
+            alt="{{ listing.title }}"
+            style="width: 150px; height: 150px; object-fit: cover; border-radius: 6px; flex-shrink: 0;"
+          >
+        {% else %}
+          <div
+            style="width: 150px; height: 150px; background: #f0f0f0; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #888; flex-shrink: 0;"
+          >
+            Нет фото
+          </div>
+        {% endif %}
+
+        <div style="flex: 1;">
+          <h3 style="margin: 0 0 0.3rem 0;">
+            <a href="{% url 'core:listing_detail' listing.pk %}" style="text-decoration: none; color: #333; font-weight: bold;">
+              {{ listing.title }}
+            </a>
+          </h3>
+
+          <p style="margin: 0.2rem 0;"><strong>{{ listing.price_per_day }} ₽ / день</strong></p>
+          <p style="margin: 0.2rem 0; color: #555;">{{ listing.description|truncatewords:15 }}</p>
+          <p style="margin: 0.2rem 0; font-size: 0.9rem; color: #666;">
+            📍 Локация: {{ listing.location }} | 👤 Владелец: {{ listing.owner.username }}
+          </p>
+        </div>
+      </div>
+    {% endfor %}
+
+    <!-- Пагинация -->
+    <div style="margin-top: 2rem; text-align: center;">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if location %}&location={{ location }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}" style="margin-right: 10px;">← Предыдущая</a>
+      {% endif %}
+
+      Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if location %}&location={{ location }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}" style="margin-left: 10px;">Следующая →</a>
+      {% endif %}
+    </div>
+
+  {% else %}
+    <p>Пока нет одобренных объявлений.</p>
+  {% endif %}
+{% endblock %}

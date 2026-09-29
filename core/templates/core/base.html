@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}Прокат вещей{% endblock %}</title>
+  <style>
+  /* Единый шрифт для всего сайта */
+  * {
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+
+  body {
+    font-size: 16px;
+    color: #333;
+    line-height: 1.5;
+  }
+
+  /* Заголовки */
+  h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+
+  h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+  }
+
+  h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+  }
+
+  /* Текст в параграфах */
+  p {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  /* Мелкий текст */
+  small {
+    font-size: 0.85rem;
+  }
+
+  /* Таблицы */
+  th, td {
+    font-size: 0.95rem;
+  }
+
+  /* Поля форм */
+  input, textarea, select {
+    font-size: 1rem;
+    font-family: inherit;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+
+  /* Кнопки */
+  button, .btn {
+    font-size: 1rem;
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  /* Ссылки */
+  a {
+    font-size: inherit;
+  }
+</style>
+
+</head>
+<body>
+
+  <!-- Меню навигации -->
+
+    <!-- Основные ссылки -->
+    <a href="{% url 'core:home' %}"
+       style="color: #530a8f; margin-right: 1rem; text-decoration: none;">Главная</a>
+    <a href="{% url 'core:about' %}"
+       style="color: #530a8f; margin-right: 1rem; text-decoration: none;">О проекте</a>
+    <a href="{% url 'core:contact' %}"
+       style="color: #530a8f; margin-right: 1rem; text-decoration: none;">Контакты</a>
+
+    {% if user.is_authenticated %}
+      <!-- Ссылки для авторизованного пользователя -->
+      <span style="color: #8f320a;">Привет, {{ user.username }}</span>
+      <a href="{% url 'core:create_ad' %}"
+         style="color: #530a8f; margin-left: 1rem; text-decoration: none;">Создать объявление</a>
+      <a href="{% url 'core:my_ads' %}"
+         style="color: #530a8f; margin-left: 1rem; text-decoration: none;">Мои объявления</a>
+      <a href="{% url 'core:my_bookings' %}"
+         style="color: #530a8f; margin-left: 1rem; text-decoration: none;">Мои заявки</a>
+      <a href="{% url 'core:owner_requests' %}"
+         style="color: #530a8f; margin-left: 1rem; text-decoration: none;">Заявки на мои объявления</a>
+
+      <a href="{% url 'logout' %}"
+         style="color: #8f0a17; margin-left: 1rem; text-decoration: none; font-weight: bold;">Выйти</a>
+
+      {% if user.is_staff %}
+        <a href="{% url 'core:approve_ad' %}"
+           style="color: #031987; margin-left: 1rem; text-decoration: none;">Модерация</a>
+      {% endif %}
+    {% else %}
+      <a href="{% url 'login' %}"
+         style="color: #a88aff; margin-left: 1rem; text-decoration: none;">Войти</a>
+      <a href="{% url 'register' %}"
+         style="color: #a88aff; margin-left: 1rem; text-decoration: none;">Регистрация</a>
+    {% endif %}
+  </nav>
+
+  <!-- Основной контент страницы -->
+  {% block content %}{% endblock %}
+
+</body>
+</html>

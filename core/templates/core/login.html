@@ -1,0 +1,36 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Вход — Прокат вещей{% endblock %}
+
+{% block content %}
+  <h1>Вход в аккаунт</h1>
+
+  {% if error %}
+    <p style="color: #b00020; margin-bottom: 1rem;">{{ error }}</p>
+  {% endif %}
+
+  <form method="post" style="max-width: 400px;">
+    {% csrf_token %}
+
+    <div style="margin-bottom: 1rem;">
+      <label for="id_username" style="display: block; margin-bottom: 0.3rem;">Логин</label>
+      <input type="text" name="username" id="id_username" required
+             style="width: 100%; padding: 0.5rem; box-sizing: border-box;">
+    </div>
+
+    <div style="margin-bottom: 1rem;">
+      <label for="id_password" style="display: block; margin-bottom: 0.3rem;">Пароль</label>
+      <input type="password" name="password" id="id_password" required
+             style="width: 100%; padding: 0.5rem; box-sizing: border-box;">
+    </div>
+
+    <button type="submit" style="padding: 0.6rem 1.2rem; background: #2c7a2c; color: white;
+                                  border: none; border-radius: 6px; font-weight: bold;">
+      Войти
+    </button>
+  </form>
+
+  <p style="margin-top: 1.5rem;">
+    Нет аккаунта? <a href="{% url 'core:register' %}">Зарегистрироваться</a>
+  </p>
+{% endblock %}

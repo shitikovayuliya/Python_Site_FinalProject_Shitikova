@@ -1,0 +1,52 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Мои заявки — Прокат вещей{% endblock %}
+
+{% block content %}
+  <h1>Мои заявки на аренду</h1>
+
+  {% if messages %}
+    <div style="margin-bottom: 1rem;">
+      {% for message in messages %}
+        <p style="padding: 0.5rem; border-radius: 4px; margin: 0 0 0.5rem 0;">
+          {% if message.tags == 'success' %}
+            <strong style="color: #2c7a2c;">✅ {{ message }}</strong>
+          {% else %}
+            <strong style="color: #b00020;">❌ {{ message }}</strong>
+          {% endif %}
+        </p>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <p>Здесь отображаются все ваши заявки: на рассмотрении, одобренные и отклонённые.</p>
+
+  {% if bookings %}
+    <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+      <thead>
+        <tr style="background: #f0f0f0; text-align: left;">
+          <th style="padding: 0.75rem;">Вещь (объявление)</th>
+          <th style="padding: 0.75rem;">Период аренды</th>
+          <th style="padding: 0.75rem;">Статус</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in bookings %}
+          <tr style="border-bottom: 1px solid #eee;">
+            <td style="padding: 0.75rem;">{{ b.listing.title }}</td>
+            <td style="padding: 0.75rem;">
+              {{ b.start_date|date:"d.m.Y" }} — {{ b.end_date|date:"d.m.Y" }}
+            </td>
+            <td style="padding: 0.75rem;">
+              <span style="font-weight: bold;" class="{{ b.status_class }}">
+                {{ b.status_text }}
+              </span>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p style="margin-top: 2rem;">У вас пока нет заявок на аренду.</p>
+  {% endif %}
+{% endblock %}

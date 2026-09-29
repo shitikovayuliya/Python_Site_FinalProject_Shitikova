@@ -1,0 +1,79 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Редактировать объявление — Прокат вещей{% endblock %}
+
+{% block content %}
+  <h1>Редактировать объявление</h1>
+
+  {% if messages %}
+    <div style="margin-bottom: 1rem;">
+      {% for message in messages %}
+        <p style="padding: 0.5rem; border-radius: 4px; margin: 0 0 0.5rem 0;">
+          {% if message.tags == 'success' %}
+            <strong style="color: #2c7a2c;">✅ {{ message }}</strong>
+          {% else %}
+            <strong style="color: #b00020;">❌ {{ message }}</strong>
+          {% endif %}
+        </p>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" style="max-width: 600px;">
+    {% csrf_token %}
+
+    {% if form.errors %}
+      <div style="background: #ffebee; color: #c62828; padding: 1rem; border-radius: 6px; margin-bottom: 1.2rem; border: 1px solid #ef9a9a;">
+        <strong>Не удалось сохранить изменения. Исправьте ошибки:</strong>
+        <ul>
+          {% for field in form %}
+            {% for error in field.errors %}
+              <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+            {% endfor %}
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <div style="margin-bottom: 0.8rem;">
+      <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Название</label>
+      {{ form.title }}
+    </div>
+
+    <div style="margin-bottom: 0.8rem;">
+      <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Цена за день (₽)</label>
+      {{ form.price_per_day }}
+    </div>
+
+    <div style="margin-bottom: 0.8rem;">
+      <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Описание</label>
+      {{ form.description }}
+    </div>
+
+    <div style="margin-bottom: 0.8rem;">
+      <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Локация</label>
+      {{ form.location }}
+    </div>
+
+    <div style="margin-bottom: 0.8rem;">
+      <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Категория</label>
+      {{ form.category }}
+    </div>
+
+    <div style="margin-bottom: 0.8rem;">
+      <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Фото (можно оставить пустым, если не меняешь)</label>
+      {{ form.image }}
+      {% if ad.image %}
+        <p style="margin-top: 0.4rem; color: #666;">Текущее фото: <a href="{{ ad.image.url }}" target="_blank">посмотреть</a></p>
+      {% endif %}
+    </div>
+<div style="margin-bottom: 0.8rem;">
+  <label style="display: block; margin-bottom: 0.3rem; font-weight: bold;">Объявление активно</label>
+  {{ form.is_active }}
+  <small style="color: #666;">Если снять галочку, объявление станет «Недоступно» для всех.</small>
+</div>
+
+    <button type="submit" style="padding: 0.6rem 1.2rem; background: #a88aff; color: white; border: none; border-radius: 6px; cursor: pointer;">Сохранить изменения</button>
+    <a href="{% url 'core:my_ads' %}" style="padding: 0.6rem 1.2rem; margin-left: 0.5rem; color: #333; text-decoration: none; border: 1px solid #ccc; border-radius: 6px;">Отмена</a>
+  </form>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Модерация объявлений — Прокат вещей{% endblock %}
+
+{% block content %}
+  <h1>Модерация новых объявлений</h1>
+
+  {% if messages %}
+    <div style="margin-bottom: 1rem;">
+      {% for message in messages %}
+        <p style="padding: 0.5rem; border-radius: 4px; margin: 0 0 0.5rem 0;">
+          {% if message.tags == 'success' %}
+            <strong style="color: #2c7a2c;">✅ {{ message }}</strong>
+          {% elif message.tags == 'warning' %}
+            <strong style="color: #d97706;">⚠️ {{ message }}</strong>
+          {% else %}
+            <strong style="color: #b00020;">❌ {{ message }}</strong>
+          {% endif %}
+        </p>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if ads %}
+    <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+      <thead>
+        <tr style="background: #f0f0f0; text-align: left;">
+          <th style="padding: 0.5rem;">Объявление</th>
+          <th style="padding: 0.5rem;">Владелец</th>
+          <th style="padding: 0.5rem;">Цена</th>
+          <th style="padding: 0.5rem;">Дата</th>
+          <th style="padding: 0.5rem;">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ad in ads %}
+          <tr style="border-bottom: 1px solid #eee;">
+            <td style="padding: 0.5rem;">{{ ad.title }}</td>
+            <td style="padding: 0.5rem;">{{ ad.owner.username }}</td>
+            <td style="padding: 0.5rem;">{{ ad.price_per_day }} ₽</td>
+            <td style="padding: 0.5rem;">{{ ad.created_at|date:"d.m.Y H:i" }}</td>
+            <td style="padding: 0.5rem;">
+              <form method="post" style="display: inline;">
+                {% csrf_token %}
+                <input type="hidden" name="ad_id" value="{{ ad.id }}">
+
+                <button type="submit" name="action" value="approve"
+                        style="padding: 0.3rem 0.8rem; background: #2c7a2c; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                  Одобрить
+                </button>
+
+                <button type="submit" name="action" value="reject"
+                        style="padding: 0.3rem 0.8rem; background: #b00020; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                  Отклонить
+                </button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p style="margin-top: 1rem;">Нет объявлений на модерацию.</p>
+  {% endif %}
+
+{% endblock %}

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Объявление создано</title>
+</head>
+<body>
+    <h1>Объявление успешно создано!</h1>
+
+    <div>
+        <p><strong>Название:</strong> {{ listing.title }}</p>
+        <p><strong>Описание:</strong> {{ listing.description|truncatewords:30 }}</p>
+        <p><strong>Цена:</strong> {{ listing.price_per_day }} ₽ / день</p>
+        <p><strong>Локация:</strong> {{ listing.location }}</p>
+        <p><strong>Категории:</strong>
+            {% for category in listing.categories.all %}
+                {{ category.name }}{% if not forloop.last %}, {% endif %}
+            {% empty %}
+                (нет категорий)
+            {% endfor %}
+        </p>
+        <p><strong>Владелец:</strong> {{ listing.owner.username }}</p>
+        <p><strong>Активно:</strong> {% if listing.is_active %}Да{% else %}Нет{% endif %}</p>
+    </div>
+
+    <hr>
+
+    <nav>
+        <a href="{% url 'core:home' %}">На главную</a> |
+        <a href="{% url 'core:create_ad' %}">Создать ещё одно</a>
+    </nav>
+</body>
+</html>

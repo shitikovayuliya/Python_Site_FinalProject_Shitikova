@@ -1,0 +1,25 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Заявка на аренду — Прокат вещей{% endblock %}
+
+{% block content %}
+  <p><a href="{% url 'core:listing_detail' listing.pk %}">← Назад</a></p>
+
+  <h1>Заявка на аренду</h1>
+  <p><strong>{{ listing.title }}</strong> — {{ listing.price_per_day }} ₽ / день</p>
+
+  <form method="post" style="max-width: 500px; margin-top: 1.5rem;">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" style="padding: 0.7rem 1.5rem; background: #2c7a2c; color: white;
+                                  border: none; border-radius: 8px; font-weight: bold;">
+      Отправить заявку
+    </button>
+  </form>
+
+  {% if messages %}
+    {% for message in messages %}
+      <p style="color: green; margin-top: 1rem;">{{ message }}</p>
+    {% endfor %}
+  {% endif %}
+{% endblock %}

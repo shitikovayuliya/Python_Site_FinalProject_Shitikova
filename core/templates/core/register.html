@@ -1,0 +1,44 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Регистрация — Прокат вещей{% endblock %}
+
+{% block content %}
+  <h1>Регистрация</h1>
+
+  <form method="post" style="max-width: 400px;">
+    {% csrf_token %}
+
+    <div style="margin-bottom: 1rem;">
+      <label for="id_username">Логин</label>
+      <input type="text" name="username" id="id_username" required
+             style="width: 100%; padding: 0.5rem; box-sizing: border-box;">
+    </div>
+
+    <div style="margin-bottom: 1rem;">
+      <label for="id_email">Email</label>
+      <input type="email" name="email" id="id_email" required
+             style="width: 100%; padding: 0.5rem; box-sizing: border-box;">
+    </div>
+
+    <div style="margin-bottom: 1rem;">
+      <label for="id_password">Пароль</label>
+      <input type="password" name="password" id="id_password" required
+             style="width: 100%; padding: 0.5rem; box-sizing: border-box;">
+    </div>
+
+    <div style="margin-bottom: 1rem;">
+      <label for="id_password2">Повторите пароль</label>
+      <input type="password" name="password2" id="id_password2" required
+             style="width: 100%; padding: 0.5rem; box-sizing: border-box;">
+    </div>
+
+    <button type="submit" style="padding: 0.6rem 1.2rem; background: #2c7a2c; color: white;
+                                  border: none; border-radius: 6px; font-weight: bold;">
+      Зарегистрироваться
+    </button>
+  </form>
+
+  <p style="margin-top: 1.5rem;">
+    Уже есть аккаунт? <a href="{% url 'login' %}">Войти</a>
+  </p>
+{% endblock %}
