@@ -369,7 +369,7 @@ def owner_requests(request):
 
 
 # ── Создание отзыва  ─────────────────────────────────────
-
+@login_required
 def create_review(request, pk):
     listing = get_object_or_404(Listing, pk=pk)
 
