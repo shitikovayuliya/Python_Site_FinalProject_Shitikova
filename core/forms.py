@@ -59,15 +59,19 @@ class RegistrationForm(forms.Form):
 # Поля с type="date" для удобного календарика в браузере.
 # Проверяет, что дата окончания не раньше даты начала.
 # ============================================================
-class RentalRequestForm(forms.Form):
-    start_date = forms.DateField(
-        widget=forms.DateInput(attrs={'type': 'date'}),
-        label='Дата начала аренды',
-    )
-    end_date = forms.DateField(
-        widget=forms.DateInput(attrs={'type': 'date'}),
-        label='Дата окончания аренды',
-    )
+class RentalRequestForm(forms.ModelForm):
+    class Meta:
+        model = RentalRequest
+        fields = ['start_date', 'end_date']
+        widgets = {
+            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'type': 'date'}),
+        }
+        labels = {
+            'start_date': 'Дата начала аренды',
+            'end_date': 'Дата окончания аренды',
+        }
+
 
     def clean(self):
         cleaned = super().clean()

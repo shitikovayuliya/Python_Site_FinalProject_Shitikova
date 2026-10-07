@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.utils import timezone
-
+from django.core.exceptions import ValidationError
 
 # ============================================================
 # Category — Категория объявлений (например: «Одежда», «Инструменты»)
@@ -73,40 +72,30 @@ class RentalRequest(models.Model):
         ('approved', 'Одобрено'),
         ('rejected', 'Отклонено'),
         ('cancelled', 'Отменено'),
+        ('completed', 'Завершено'),
     ]
 
-    listing = models.ForeignKey(
-        Listing,
-        on_delete=models.CASCADE,
-        related_name='rental_requests',
-        verbose_name='Объявление'
-    )
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='rental_requests',
-        verbose_name='Пользователь'
-    )
-    start_date = models.DateField('Дата начала аренды')
-    end_date = models.DateField('Дата окончания аренды')
-    quantity = models.PositiveIntegerField('Количество предметов', default=1)
-    comments = models.TextField('Комментарии', blank=True)
-    status = models.CharField(
-        'Статус',
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default='pending'
-    )
-    requested_at = models.DateTimeField('Дата запроса', auto_now_add=True)
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE)
+    renter = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
 
-    class Meta:
-        verbose_name = 'Запрос на аренду'
-        verbose_name_plural = 'Запросы на аренду'
-        ordering = ['-requested_at']
+    def clean(self):
+        # Проверка на пересечение с другими активными заявками
+        overlapping = RentalRequest.objects.filter(
+            listing=self.listing,
+            status__in=['pending', 'approved'],
+        ).exclude(pk=self.pk).filter(
+            start_date__lt=self.end_date,
+            end_date__gt=self.start_date,
+        )
+        if overlapping.exists():
+            raise ValidationError("Эта вещь уже забронирована на выбранные даты.")
 
-    def __str__(self):
-        return f"{self.listing.title}: {self.user.username} ({self.start_date}–{self.end_date})"
-
+    def save(self, *args, **kwargs):
+        self.full_clean()  # вызовет clean()
+        super().save(*args, **kwargs)
 
 # ============================================================
 # ListingImage — Дополнительные фото для объявления
@@ -135,32 +124,6 @@ class ListingImage(models.Model):
 
 
 # ============================================================
-# Booking — Бронирование (альтернативная модель заявок)
-# Дублирует логику RentalRequest, но с дополнительным
-# статусом 'completed'. Если используешь RentalRequest как
-# основную модель заявок — возможно, Booking не нужен и
-# его можно удалить, чтобы избежать путаницы.
-# ============================================================
-class Booking(models.Model):
-    STATUS_CHOICES = [
-        ('pending', 'На рассмотрении'),
-        ('approved', 'Одобрено'),
-        ('rejected', 'Отклонено'),
-        ('completed', 'Завершено'),
-    ]
-
-    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='bookings')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='my_bookings')
-    start_date = models.DateField()
-    end_date = models.DateField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Заявка {self.id} на {self.listing.title}"
-
-
-# ============================================================
 # Review — Отзыв на объявление и его владельца
 # Оставлять может любой авторизованный пользователь;
 # рейтинг — от 1 до 5 звёзд, комментарий необязателен.
@@ -178,6 +141,25 @@ class Review(models.Model):
     ])
     comment = models.TextField(blank=True, max_length=1000)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        # Проверяем, что у автора есть хотя бы одна завершённая аренда этого объявления
+        from core.models import RentalRequest
+        has_completed_rental = RentalRequest.objects.filter(
+            listing=self.listing,
+            renter=self.author,
+            status='approved',
+
+        ).exists()
+
+        if not has_completed_rental:
+            raise ValidationError(
+                "Отзыв можно оставить только после завершённой аренды этой вещи."
+            )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Отзыв {self.rating}⭐ на {self.listing.title}"

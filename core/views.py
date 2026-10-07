@@ -2,11 +2,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.urls import reverse
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.db.models import Q
-from .models import Listing, Review, RentalRequest, Booking
+from .models import Listing, RentalRequest
 from .forms import CreateAdForm, RegistrationForm, RentalRequestForm, ReviewForm
 from django.utils import timezone
 
@@ -106,14 +105,12 @@ def rental_request(request, pk):
     if request.method == 'POST':
         form = RentalRequestForm(request.POST)
         if form.is_valid():
-            booking = Booking(
-                listing=listing,
-                user=request.user,
-                start_date=form.cleaned_data['start_date'],
-                end_date=form.cleaned_data['end_date'],
-                status='pending',
-            )
-            booking.save()
+            rental = form.save(commit=False)      # создаём объект без сохранения
+            rental.user = request.user           # привязываем пользователя
+            rental.listing = listing             # привязываем объявление
+            rental.status = 'pending'            # статус ставим на сервере
+            rental.save()                        # сохраняем в БД (в RentalRequest!)
+
             messages.success(request, 'Заявка отправлена владельцу!')
             return redirect('core:listing_detail', pk=listing.pk)
     else:
@@ -124,21 +121,11 @@ def rental_request(request, pk):
         'listing': listing,
     })
 
-
 # ── Мои заявки (для обычного пользователя) ───
 @login_required
 def my_requests(request):
     requests = RentalRequest.objects.filter(user=request.user).select_related('listing')
     return render(request, 'core/my_requests.html', {'requests': requests})
-
-
-# ── Заявки на мои объявления (для владельца) ─
-@login_required
-def owner_requests(request):
-    requests = RentalRequest.objects.filter(
-        listing__owner=request.user
-    ).select_related('listing', 'user')
-    return render(request, 'core/owner_requests.html', {'requests': requests})
 
 
 # ── Создание объявления ──────────────────────
@@ -292,86 +279,88 @@ def edit_ad(request, ad_id):
 
 
 # ── Мои заявки ─────────────────────────────────────
-
 @login_required
 def my_bookings(request):
-    # Все заявки текущего пользователя
-    bookings = Booking.objects.filter(user=request.user) \
+    requests = RentalRequest.objects.filter(user=request.user) \
         .exclude(listing__owner=request.user) \
         .select_related('listing') \
-        .order_by('-created_at')
+        .order_by('-requested_at')
 
-    # Добавим понятный статус для шаблона
-    for b in bookings:
-        if b.status == 'pending':
-            b.status_text = 'На рассмотрении'
-            b.status_class = 'text-warning'
-        elif b.status == 'approved':
-            b.status_text = 'Одобрено'
-            b.status_class = 'text-success'
-        elif b.status == 'rejected':
-            b.status_text = 'Отклонено'
-            b.status_class = 'text-danger'
+    for r in requests:
+        if r.status == 'pending':
+            r.status_text = 'На рассмотрении'
+            r.status_class = 'text-warning'
+        elif r.status == 'approved':
+            r.status_text = 'Одобрено'
+            r.status_class = 'text-success'
+        elif r.status == 'rejected':
+            r.status_text = 'Отклонено'
+            r.status_class = 'text-danger'
         else:
-            b.status_text = 'Завершено'
-            b.status_class = 'text-muted'
+            r.status_text = 'Отменено'
+            r.status_class = 'text-muted'
 
-    context = {'bookings': bookings}
+    context = {'requests': requests}
     return render(request, 'core/my_bookings.html', context)
 
-# ── Одобрение заявки  ─────────────────────────────────────
+
+# ── Одобрение заявки ─────────────────────────────────────
 @login_required
 def approve_booking(request, booking_id):
-    booking = get_object_or_404(Booking, id=booking_id)
+    rental = get_object_or_404(RentalRequest, id=booking_id)
 
-    # Владелец объявления должен совпадать с текущим пользователем
-    if booking.listing.owner != request.user:
+    if rental.listing.owner != request.user:
         messages.error(request, 'Вы не можете модерировать чужие заявки.')
         return redirect('core:owner_requests')
 
-    booking.status = 'approved'
-    booking.save()
-    messages.success(request, f'Заявка №{booking.id} на "{booking.listing.title}" одобрена.')
+    rental.status = 'approved'
+    rental.save()
+    messages.success(request, f'Заявка №{rental.id} на "{rental.listing.title}" одобрена.')
     return redirect('core:owner_requests')
 
-# ── Отклонение заявки  ─────────────────────────────────────
+
+# ── Отклонение заявки ─────────────────────────────────────
 @login_required
 def reject_booking(request, booking_id):
-    booking = get_object_or_404(Booking, id=booking_id)
+    rental = get_object_or_404(RentalRequest, id=booking_id)
 
-    if booking.listing.owner != request.user:
+    if rental.listing.owner != request.user:
         messages.error(request, 'Вы не можете модерировать чужие заявки.')
         return redirect('core:owner_requests')
 
-    booking.status = 'rejected'
-    booking.save()
-    messages.warning(request, f'Заявка №{booking.id} на "{booking.listing.title}" отклонена.')
+    rental.status = 'rejected'
+    rental.save()
+    messages.warning(request, f'Заявка №{rental.id} на "{rental.listing.title}" отклонена.')
     return redirect('core:owner_requests')
 
+
+# ── Заявки на объявления владельца ───────────────────────
 @login_required
 def owner_requests(request):
-    # Все заявки на объявления, где владелец — текущий пользователь
-    bookings = Booking.objects.filter(listing__owner=request.user).select_related('listing', 'user').order_by('-created_at')
+    requests = RentalRequest.objects.filter(listing__owner=request.user) \
+        .select_related('listing', 'user') \
+        .order_by('-requested_at')
 
-    for b in bookings:
-        if b.status == 'pending':
-            b.status_text = 'На рассмотрении'
-            b.status_class = 'text-warning'
-        elif b.status == 'approved':
-            b.status_text = 'Одобрено'
-            b.status_class = 'text-success'
-        elif b.status == 'rejected':
-            b.status_text = 'Отклонено'
-            b.status_class = 'text-danger'
+    for r in requests:
+        if r.status == 'pending':
+            r.status_text = 'На рассмотрении'
+            r.status_class = 'text-warning'
+        elif r.status == 'approved':
+            r.status_text = 'Одобрено'
+            r.status_class = 'text-success'
+        elif r.status == 'rejected':
+            r.status_text = 'Отклонено'
+            r.status_class = 'text-danger'
         else:
-            b.status_text = 'Завершено'
-            b.status_class = 'text-muted'
+            r.status_text = 'Отменено'
+            r.status_class = 'text-muted'
 
-    context = {'bookings': bookings}
+    context = {'requests': requests}
     return render(request, 'core/owner_requests.html', context)
 
-# ── Создание отзыва  ─────────────────────────────────────
 
+# ── Создание отзыва  ─────────────────────────────────────
+@login_required
 def create_review(request, pk):
     listing = get_object_or_404(Listing, pk=pk)
 
