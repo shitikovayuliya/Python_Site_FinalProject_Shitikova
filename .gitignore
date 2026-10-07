@@ -5,3 +5,5 @@ db.sqlite3
 media/
 .idea/
 *.log
+.env
+.DS_Store
