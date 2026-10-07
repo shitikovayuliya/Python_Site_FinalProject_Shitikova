@@ -135,30 +135,6 @@ class ListingImage(models.Model):
 
 
 # ============================================================
-# Booking — Бронирование (альтернативная модель заявок)
-# Дублирует логику RentalRequest, но с дополнительным
-# статусом 'completed'.
-# ============================================================
-class Booking(models.Model):
-    STATUS_CHOICES = [
-        ('pending', 'На рассмотрении'),
-        ('approved', 'Одобрено'),
-        ('rejected', 'Отклонено'),
-        ('completed', 'Завершено'),
-    ]
-
-    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='bookings')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='my_bookings')
-    start_date = models.DateField()
-    end_date = models.DateField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Заявка {self.id} на {self.listing.title}"
-
-
-# ============================================================
 # Review — Отзыв на объявление и его владельца
 # Оставлять может любой авторизованный пользователь;
 # рейтинг — от 1 до 5 звёзд, комментарий необязателен.

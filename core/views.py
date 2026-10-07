@@ -128,15 +128,6 @@ def my_requests(request):
     return render(request, 'core/my_requests.html', {'requests': requests})
 
 
-# ── Заявки на мои объявления (для владельца) ─
-@login_required
-def owner_requests(request):
-    requests = RentalRequest.objects.filter(
-        listing__owner=request.user
-    ).select_related('listing', 'user')
-    return render(request, 'core/owner_requests.html', {'requests': requests})
-
-
 # ── Создание объявления ──────────────────────
 @login_required
 def create_ad(request):
