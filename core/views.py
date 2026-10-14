@@ -72,7 +72,7 @@ def listing_detail(request, pk):
         now = timezone.now().date()
         active_booking = RentalRequest.objects.filter(
             listing=listing,
-            status='approved',          # <-- замени на своё значение, если у тебя другое
+            status='approved',
             start_date__lte=now,
             end_date__gte=now,
         ).exists()
@@ -86,7 +86,7 @@ def listing_detail(request, pk):
 
     reviews = listing.reviews.all() if hasattr(listing, 'reviews') else []
 
-    # Передаём форму только если пользователь авторизован (так как в шаблоне она показывается только для них)
+    # Передаём форму только если пользователь авторизован
     form = ReviewForm() if request.user.is_authenticated else None
 
     return render(request, 'core/listing_detail.html', {
@@ -177,7 +177,7 @@ def approve_ad(request):
             messages.success(request, f'Объявление «{ad.title}» одобрено.')
         elif action == 'reject':
             ad.is_approved = False
-            ad.is_active = False  # <-- вот ключ: объявление уходит из очереди
+            ad.is_active = False
             ad.save()
             messages.warning(request, f'Объявление «{ad.title}» отклонено.')
 
@@ -399,7 +399,7 @@ def delete_ad(request, ad_id):
         messages.success(request, 'Объявление успешно удалено.')
         return redirect('core:my_ads')
 
-    # Если GET — показываем страницу подтверждения (или можно сделать через JS-подтверждение)
+    # Если GET — показываем страницу подтверждения
     return render(request, 'core/delete_ad_confirm.html', {'ad': ad})
 
 # ── Активация объявления  ─────────────────────────────────────

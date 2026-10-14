@@ -9,7 +9,7 @@ from core.views import user_login, register
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    # Наши кастомные страницы входа/регистрации
+    # Кастомные страницы входа/регистрации
     path('accounts/login/', user_login, name='login'),
     path('accounts/register/', register, name='register'),
 
