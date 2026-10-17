@@ -12,6 +12,9 @@ from django.utils import timezone
 
 
 # ── Главная ──────────────────────────────────
+# Отображает список одобренных и активных объявлений
+# Поддерживает поиск и фильтрацию по цене/локации
+
 def home(request):
     listings = Listing.objects.filter(is_approved=True, is_active=True)
 
@@ -51,6 +54,8 @@ def home(request):
 
 
 # ── О проекте / Контакты ──────────────────────
+# Статические страницы с информацией о сервисе и контактах
+
 def about(request):
     return render(request, 'core/about.html')
 
@@ -60,6 +65,9 @@ def contact(request):
 
 
 # ── Детальная карточка объявления ────────────
+# Показывает полное объявление с расчётом статуса
+# Статус: Недоступно / Забронировано / Доступно
+
 def listing_detail(request, pk):
     listing = get_object_or_404(Listing, pk=pk)
 
@@ -97,6 +105,8 @@ def listing_detail(request, pk):
         'form': form,
     })
 # ── Подать заявку на аренду ──────────────────
+# Авторизованный пользователь создаёт заявку на аренду
+# Заявка отправляется владельцу на рассмотрение
 
 @login_required
 def rental_request(request, pk):
@@ -106,7 +116,7 @@ def rental_request(request, pk):
         form = RentalRequestForm(request.POST)
         if form.is_valid():
             rental = form.save(commit=False)      # создаём объект без сохранения
-            rental.user = request.user           # привязываем пользователя
+            rental.renter = request.user           # привязываем пользователя
             rental.listing = listing             # привязываем объявление
             rental.status = 'pending'            # статус ставим на сервере
             rental.save()                        # сохраняем в БД (в RentalRequest!)
@@ -123,12 +133,13 @@ def rental_request(request, pk):
 
 # ── Мои заявки (для обычного пользователя) ───
 @login_required
-def my_requests(request):
-    requests = RentalRequest.objects.filter(user=request.user).select_related('listing')
-    return render(request, 'core/my_requests.html', {'requests': requests})
+
 
 
 # ── Создание объявления ──────────────────────
+# Авторизованный пользователь создаёт новое объявление
+# Объявление создаётся с is_approved=False (на модерации)
+
 @login_required
 def create_ad(request):
     if request.method == 'POST':
@@ -150,6 +161,9 @@ def ad_submitted(request):
 
 
 # ── Модерация (для staff) ────────────────────
+# Staff-пользователи одобряют или отклоняют объявления
+# Одобренные объявления видны на главной странице
+
 @login_required
 def approve_ad(request):
     if not request.user.is_staff:
@@ -188,6 +202,9 @@ def approve_ad(request):
     return render(request, 'core/approve_ad.html', {'ads': ads})
 
 # ── Регистрация ──────────────────────────────
+# Форма регистрации нового пользователя
+# Проверяет совпадение паролей перед созданием аккаунта
+
 def register(request):
     if request.method == 'POST':
         form = RegistrationForm(request.POST)
@@ -203,6 +220,9 @@ def register(request):
 
 
 # ── Вход ─────────────────────────────────────
+# Аутентификация пользователя по логину и паролю
+# При успехе — редирект на главную, при ошибке — сообщение
+
 def user_login(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -223,6 +243,9 @@ def logout_view(request):
     return redirect('core:home')
 
 # ── Мои объявления ─────────────────────────────────────
+# Показывает все объявления текущего пользователя
+# Добавляет текстовые и CSS-классы для отображения статуса
+
 @login_required
 def my_ads(request):
     # Все объявления владельца
@@ -246,6 +269,9 @@ def my_ads(request):
     }
     return render(request, 'core/my_ads.html', context)
 # ── Редактирование объявления ─────────────────────────────────────
+# Владелец может редактировать только свои объявления
+# Проверяет права доступа перед сохранением изменений
+
 @login_required
 def edit_ad(request, ad_id):
     try:
@@ -264,11 +290,7 @@ def edit_ad(request, ad_id):
             form.save()
             messages.success(request, f'Объявление «{ad.title}» успешно обновлено.')
             return redirect('core:my_ads')
-        else:
-            # Отладка: выводим ошибки в консоль серверЫа
-            print("=== ОШИБКИ ФОРМЫ ПРИ РЕДАКТИРОВАНИИ ===")
-            print(form.errors)
-            print("=======================================")
+        # Ошибки формы отображаются в шаблоне
     else:
         form = CreateAdForm(instance=ad)
 
@@ -279,12 +301,15 @@ def edit_ad(request, ad_id):
 
 
 # ── Мои заявки ─────────────────────────────────────
+# Показывает заявки пользователя на аренду чужих объявлений
+# Исключает заявки на собственные объявления
+
 @login_required
 def my_bookings(request):
-    requests = RentalRequest.objects.filter(user=request.user) \
+    requests = RentalRequest.objects.filter(renter=request.user) \
         .exclude(listing__owner=request.user) \
         .select_related('listing') \
-        .order_by('-requested_at')
+        .order_by('-start_date')
 
     for r in requests:
         if r.status == 'pending':
@@ -305,6 +330,9 @@ def my_bookings(request):
 
 
 # ── Одобрение заявки ─────────────────────────────────────
+# Владелец объявления одобряет заявку на аренду
+# Проверяет, что это именно его объявление
+
 @login_required
 def approve_booking(request, booking_id):
     rental = get_object_or_404(RentalRequest, id=booking_id)
@@ -320,6 +348,9 @@ def approve_booking(request, booking_id):
 
 
 # ── Отклонение заявки ─────────────────────────────────────
+# Владелец объявления отклоняет заявку на аренду
+# Проверяет, что это именно его объявление
+
 @login_required
 def reject_booking(request, booking_id):
     rental = get_object_or_404(RentalRequest, id=booking_id)
@@ -335,11 +366,14 @@ def reject_booking(request, booking_id):
 
 
 # ── Заявки на объявления владельца ───────────────────────
+# Показывает все заявки на аренду объявлений текущего пользователя
+# Владелец может одобрить или отклонить каждую заявку
+
 @login_required
 def owner_requests(request):
     requests = RentalRequest.objects.filter(listing__owner=request.user) \
-        .select_related('listing', 'user') \
-        .order_by('-requested_at')
+        .select_related('listing', 'renter') \
+        .order_by('-start_date')
 
     for r in requests:
         if r.status == 'pending':
@@ -360,6 +394,9 @@ def owner_requests(request):
 
 
 # ── Создание отзыва  ─────────────────────────────────────
+# Авторизованный пользователь оставляет отзыв на объявление
+# Валидация: отзыв можно оставить только после одобренной аренды
+
 @login_required
 def create_review(request, pk):
     listing = get_object_or_404(Listing, pk=pk)
@@ -385,6 +422,9 @@ def create_review(request, pk):
     })
 
 # ── Удаление объявления  ─────────────────────────────────────
+# Владелец может удалить своё объявление
+# GET — показывает страницу подтверждения, POST — удаляет
+
 @login_required
 def delete_ad(request, ad_id):
     ad = get_object_or_404(Listing, id=ad_id)
@@ -403,6 +443,9 @@ def delete_ad(request, ad_id):
     return render(request, 'core/delete_ad_confirm.html', {'ad': ad})
 
 # ── Активация объявления  ─────────────────────────────────────
+# Владелец включает/выключает видимость своего объявления
+# Неактивные объявления не отображаются на главной
+
 @login_required
 def toggle_active(request, ad_id):
     ad = get_object_or_404(Listing, id=ad_id, owner=request.user)

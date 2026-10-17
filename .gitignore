@@ -7,3 +7,12 @@ media/
 *.log
 .env
 .DS_Store
+
+# GigaCode / GigaIDE
+.gigacode/
+.gigaide/
+
+# Django
+staticfiles/
+*.swp
+*.swo

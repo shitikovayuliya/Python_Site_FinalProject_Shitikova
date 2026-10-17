@@ -30,7 +30,6 @@ urlpatterns = [
     path('bookings/approve/<int:booking_id>/', views.approve_booking, name='approve_booking'),  # Одобрить бронь (как владелец)
     path('bookings/reject/<int:booking_id>/', views.reject_booking, name='reject_booking'),  # Отклонить бронь (как владелец)
 
-    path('my-requests/', views.my_requests, name='my_requests'),          # Мои запросы на аренду
     path('owner-requests/', views.owner_requests, name='owner_requests'),  # Запросы к моим объявлениям (как владелец)
 
     # ============================================================

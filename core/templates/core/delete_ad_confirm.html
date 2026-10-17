@@ -1,0 +1,48 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Удаление объявления — Прокат вещей{% endblock %}
+
+{% block content %}
+  <h1>Удаление объявления</h1>
+
+  <!-- ============================================================
+       БЛОК СИСТЕМНЫХ СООБЩЕНИЙ
+       ============================================================ -->
+  {% if messages %}
+    <div style=\"margin-bottom: 1rem;\">
+      {% for message in messages %}
+        <p style=\"padding: 0.5rem; border-radius: 4px; margin: 0 0 0.5rem 0; border: 1px solid transparent;\">
+          {% if message.tags == 'success' %}
+            <strong style=\"color: #2c7a2c; background: #e8f5e9;\">✅ {{ message }}</strong>
+          {% elif message.tags == 'warning' %}
+            <strong style=\"color: #d97706; background: #fef3c7;\">⚠️ {{ message }}</strong>
+          {% else %}
+            <strong style=\"color: #b00020; background: #ffebee;\">❌ {{ message }}</strong>
+          {% endif %}
+        </p>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div style=\"background: #fff3f3; border: 1px solid #ffc9c9; border-radius: 8px; padding: 1.5rem; margin-top: 1rem;\">
+    <p style=\"font-size: 1.1rem; margin-bottom: 1rem;\">
+      Вы уверены, что хотите удалить объявление
+      <strong>«{{ ad.title }}»</strong>?
+    </p>
+    <p style=\"color: #666; margin-bottom: 1.5rem;\">
+      Это действие нельзя отменить. Все связанные заявки и отзывы также будут удалены.
+    </p>
+
+    <form method=\"post\" style=\"display: flex; gap: 1rem;\">
+      {% csrf_token %}
+      <button type=\"submit\"
+              style=\"padding: 0.6rem 1.5rem; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer;\">
+        Удалить
+      </button>
+      <a href=\"{% url 'core:my_ads' %}\"
+         style=\"padding: 0.6rem 1.5rem; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; text-decoration: none;\">
+        Отмена
+      </a>
+    </form>
+  </div>
+{% endblock %}

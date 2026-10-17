@@ -30,9 +30,6 @@ class CreateAdForm(forms.ModelForm):
             'contact_info': 'Контактная информация',
             'is_active': 'Объявление активно',
         }
-        widgets = {
-            'categories': forms.Select(),
-        }
 
 
 # ============================================================
